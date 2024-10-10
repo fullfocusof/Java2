@@ -39,9 +39,6 @@ public class OperationStatus
     @Override
     public String toString()
     {
-        return "OperationStatus{" +
-                "status=" + _status +
-                ", message='" + _message + '\'' +
-                "}\n";
+        return _status + "\n" + _message + "\n";
     }
 }

@@ -1,11 +1,13 @@
 package org.example;
 
+import org.example.Article.Article;
 import org.example.OS.OperationStatus;
 import org.example.OS.Status;
 import org.example.WD.WorkingDirectory;
 
-import java.io.File;
 import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Scanner;
 
 public class Main
@@ -13,14 +15,12 @@ public class Main
     public static void main(String[] args)
     {
         Scanner sc = new Scanner(System.in);
-        String[] prevInputs; // библиотека JUndo
+        OperationStatus os = new OperationStatus();
         String userInput;
 
         String curDir = Paths.get("").toAbsolutePath().toString();
         WorkingDirectory WD = WorkingDirectory.getInstance(curDir);
         System.out.print(curDir + ">");
-
-        OperationStatus os = new OperationStatus();
 
         boolean exitProg = false;
         while (!exitProg)
@@ -28,7 +28,7 @@ public class Main
             userInput = sc.nextLine();
             switch (userInput)
             {
-                case "q":
+                case "exit":
                 {
                     exitProg = true;
                 }
@@ -53,24 +53,27 @@ public class Main
                 }
                 break;
 
+                case "help":
+                {
+                    String sb = String.format("%-50s %s%n", "DIR", "Вывести содержимое каталога") +
+                            String.format("%-50s %s%n", "TREE", "Графически отображает структуру каталогов диска или пути") +
+                            String.format("%-50s %s%n", "CD ..", "Перейти в родительский каталог") +
+                            String.format("%-50s %s%n", "CD <абсолютный_путь_к_каталогу>", "Перейти в каталог по пути") +
+                            String.format("%-50s %s%n", "CD <имя_каталога/путь_к_дочернему_каталогу>", "Перейти в дочерний каталог с заданным именем или по относительному пути") +
+                            String.format("%-50s %s%n", "MKDIR <название_каталога>", "Создать каталог с заданным именем") +
+                            String.format("%-50s %s%n", "RMDIR <название_каталога>", "Удалить дочерний каталог с заданным именем") +
+                            String.format("%-50s %s%n", "EXIT", "Выйти из программы");
+                    System.out.println(sb);
+                }
+                break;
+
                 default:
                 {
-//                    File[] roots = File.listRoots();
-//                    boolean isRoot = false;
-//                    for (File root : roots)
-//                    {
-//                        System.out.println(root.toString());
-//                        if (userInput.equals(root.getAbsolutePath().substring(0, 2)))
-//                        {
-//                            isRoot = true;
-//                            break;
-//                        }
-//                    }
-
                     if (userInput.startsWith("cd "))
                     {
                         String dirName = userInput.substring(3).trim();
-                        os = WD.cdChild(dirName);
+                        if (dirName.contains(":")) os = WD.changeDir(dirName);
+                        else os = WD.cdChild(dirName);
                         curDir = WD.getCurDir();
                     }
                     else if (userInput.startsWith("mkdir "))
@@ -83,12 +86,20 @@ public class Main
                         String dirName = userInput.substring(6).trim();
                         os = WD.deleteWithSubdir(dirName);
                     }
-//                    else if (isRoot)
-//                    {
-//                        String dirName = userInput.substring(2).trim();
-//                        os = WD.changeDir(dirName);
-//                        curDir = WD.getCurDir();
-//                    }
+                    else if (userInput.startsWith("parse "))
+                    {
+                        String fileName = userInput.substring(6).trim();
+                        String filePath = curDir + "\\" + fileName;
+                        List<Article> arts = Article.getFromFile(filePath);
+                        for (Article art : arts)
+                        {
+                            System.out.println(art.toString() + "\n");
+                        }
+
+                        Article.toGsonFile(arts, "outputGson.json");
+                        Article.toJacksonFile(arts, "outputJackson.json");
+                        Article.toPDFFile(arts, "outputPDF.pdf");
+                    }
                     else
                     {
                         os.setStatus(Status.ERROR);
@@ -100,7 +111,7 @@ public class Main
 
             if (!exitProg)
             {
-                System.out.println(os.toString());
+                if (!userInput.equals("help")) System.out.println(os.toString());
                 System.out.print(curDir + ">");
             }
         }

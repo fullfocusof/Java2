@@ -5,12 +5,13 @@ import org.example.OS.Status;
 
 import java.io.File;
 import java.io.IOException;
+
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+
 import java.util.Comparator;
 import java.util.List;
-import java.util.stream.Collectors;
 
 public class WorkingDirectory
 {
@@ -49,10 +50,8 @@ public class WorkingDirectory
             for (Path entry : entries)
             {
                 Path curPath = entry.getFileName();
-                //if (Files.isDirectory(entry)) System.out.println("<DIR>\t" + curPath);
-                //else System.out.println("\t\t" + curPath);
-                if (Files.isDirectory(entry)) data.append("<DIR>\t" + curPath + "\n");
-                else data.append("\t\t" + curPath + "\n");
+                if (Files.isDirectory(entry)) data.append(String.format("%-10s %s%n", "<DIR>", curPath));
+                else data.append(String.format("%-10s %s%n", "", curPath));
             }
 
             os.setStatus(Status.OK);
@@ -62,7 +61,6 @@ public class WorkingDirectory
         {
             os.setStatus(Status.ERROR);
             os.setMessage("Каталога " + curDir.toString() + " не существует");
-            //System.err.println("Ошибка: " + e.getMessage());
         }
 
         return os;
@@ -145,11 +143,11 @@ public class WorkingDirectory
         return os;
     }
 
-    public OperationStatus changeDir(String dirName)
+    public OperationStatus changeDir(String dirPath)
     {
         OperationStatus os = new OperationStatus();
 
-        Path destDir = Paths.get(dirName);
+        Path destDir = Paths.get(dirPath);
         if (childDirExists(destDir))
         {
             directoryName = destDir.toString();
@@ -159,7 +157,7 @@ public class WorkingDirectory
         else
         {
             os.setStatus(Status.ERROR);
-            os.setMessage("Каталога " + dirName + " не существует");
+            os.setMessage("Каталога " + dirPath + " не существует");
         }
 
         return os;
@@ -174,50 +172,10 @@ public class WorkingDirectory
 
         if (childDirExists(toDelDir))
         {
-            File[] contents = toDelDir.toFile().listFiles();
-            if (contents != null)
-            {
-                for (File subdir : contents)
-                {
-                    deleteWithSubdir(subdir.getName());
-                    if(!subdir.delete())
-                    {
-                        os.setStatus(Status.ERROR);
-                        os.setMessage("Ошибка удаления " + subdir.getAbsolutePath());
-                    }
-                }
-            }
-
-            if (!toDelDir.toFile().delete())
-            {
-                os.setStatus(Status.ERROR);
-                os.setMessage("Ошибка удаления " + toDelDir.getFileName());
-            }
-
-//            try
-//            {
-//                Files.walk(toDelDir).filter(path -> !path.equals(toDelDir) && Files.isDirectory(path)).forEach(path ->
-//                {
-//                    try
-//                    {
-//                        Files.delete(path);
-//                    }
-//                    catch (IOException e)
-//                    {
-//                        System.out.println("Ошибка: " + e.getMessage());
-//                    }
-//                });
-//                Files.delete(toDelDir);
-//                toDelDir.
-//
-//                os.setStatus(Status.OK);
-//                os.setMessage("");
-//            }
-//            catch (IOException e)
-//            {
-//                os.setStatus(Status.OK);
-//                os.setMessage("Ошибка: " + e.getMessage());
-//            }
+            File toDelFile = toDelDir.toFile();
+            deleteDirectory(toDelFile);
+            os.setStatus(Status.OK);
+            os.setMessage("Каталог удален успешно");
         }
         else
         {
@@ -228,26 +186,39 @@ public class WorkingDirectory
         return os;
     }
 
-    public void getFilesWithExtension(String ext)
+    public static void deleteDirectory(File dir)
     {
-        Path curDir = Paths.get(directoryName);
-
-        try
+        File[] contents = dir.listFiles();
+        if (contents != null)
         {
-            Files.walk(curDir).forEach(file ->
+            for (File file : contents)
             {
-                File curFile = file.toFile();
-                if (curFile.isFile() && curFile.getPath().endsWith(ext))
-                {
-                    System.out.println(file.getFileName());
-                }
-            });
+                deleteDirectory(file);
+            }
         }
-        catch (IOException e)
-        {
-            System.err.println("Ошибка: " + e.getMessage());
-        }
+        dir.delete();
     }
+
+//    public void getFilesWithExtension(String ext)
+//    {
+//        Path curDir = Paths.get(directoryName);
+//
+//        try
+//        {
+//            Files.walk(curDir).forEach(file ->
+//            {
+//                File curFile = file.toFile();
+//                if (curFile.isFile() && curFile.getPath().endsWith(ext))
+//                {
+//                    System.out.println(file.getFileName());
+//                }
+//            });
+//        }
+//        catch (IOException e)
+//        {
+//            System.err.println("Ошибка: " + e.getMessage());
+//        }
+//    }
 
     public OperationStatus getDirTree(String dirName, int level)
     {
@@ -279,30 +250,30 @@ public class WorkingDirectory
         return getDirTree(directoryName, level);
     }
 
-    public String subDirExists(String curDirName, String subDirName)
-    {
-        Path curDir = Paths.get(curDirName);
-        if (Files.exists(curDir) && Files.isDirectory(curDir))
-        {
-            try
-            {
-                for (Path subDir : Files.list(curDir).filter(Files::isDirectory).toList())
-                {
-                    if (subDir.getFileName().toString().equals(subDirName)) return subDir.toString();
-                    String recursiveCheck = subDirExists(subDir.toString(), subDirName);
-                    if (!recursiveCheck.isEmpty()) return recursiveCheck;
-                }
-            }
-            catch (IOException e)
-            {
-                System.err.println("Ошибка при доступе к директории: " + e.getMessage());
-            }
-        }
-        return "";
-    }
-
-    public String subDirExists(String subDirName)
-    {
-        return subDirExists(directoryName, subDirName);
-    }
+//    public String subDirExists(String curDirName, String subDirName)
+//    {
+//        Path curDir = Paths.get(curDirName);
+//        if (Files.exists(curDir) && Files.isDirectory(curDir))
+//        {
+//            try
+//            {
+//                for (Path subDir : Files.list(curDir).filter(Files::isDirectory).toList())
+//                {
+//                    if (subDir.getFileName().toString().equals(subDirName)) return subDir.toString();
+//                    String recursiveCheck = subDirExists(subDir.toString(), subDirName);
+//                    if (!recursiveCheck.isEmpty()) return recursiveCheck;
+//                }
+//            }
+//            catch (IOException e)
+//            {
+//                System.err.println("Ошибка при доступе к директории: " + e.getMessage());
+//            }
+//        }
+//        return "";
+//    }
+//
+//    public String subDirExists(String subDirName)
+//    {
+//        return subDirExists(directoryName, subDirName);
+//    }
 }

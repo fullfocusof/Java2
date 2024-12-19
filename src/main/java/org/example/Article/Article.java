@@ -17,6 +17,7 @@ import java.util.*;
 import java.util.List;
 
 import com.google.gson.*;
+import com.google.gson.GsonBuilder;
 
 @Getter
 @Setter
@@ -141,15 +142,28 @@ public class Article
     public static void toJacksonFile(List<Article> arts, String filename)
     {
         ObjectMapper mapper = new ObjectMapper();
-
-        try (FileWriter writer = new FileWriter(filename))
+        try
         {
-            mapper.writeValue(writer, arts);
+            mapper.writeValue(new File(filename), arts);
         }
         catch (IOException e)
         {
             System.out.println(e.getMessage());
         }
+
+//        try (FileWriter writer = new FileWriter(filename))
+//        {
+//            mapper.writeValue(writer, arts);
+////            for (int i = 0; i < arts.size(); i++)
+////            {
+////                String obj = new ObjectMapper().writerWithDefaultPrettyPrinter().writeValueAsString(arts.get(i));
+////                mapper.writeValue(writer, obj);
+////            }
+//        }
+//        catch (IOException e)
+//        {
+//            System.out.println(e.getMessage());
+//        }
     }
 
     public static void toPDFFile(List<Article> arts, String filename)

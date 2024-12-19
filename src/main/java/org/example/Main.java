@@ -100,6 +100,9 @@ public class Main
                         Article.toGsonFile(arts, "outputGson.json");
                         Article.toJacksonFile(arts, "outputJackson.json");
                         Article.toPDFFile(arts, "outputPDF.pdf");
+
+                        os.setStatus(Status.OK);
+                        os.setMessage("Преобразование завершено");
                     }
                     else
                     {
